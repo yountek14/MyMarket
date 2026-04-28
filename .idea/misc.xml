@@ -4,22 +4,15 @@
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
-<<<<<<< HEAD
         <option value="$PROJECT_DIR$/ms-usuarios/pom.xml" />
-      </list>
-    </option>
-  </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="ms-17" project-jdk-type="JavaSDK">
-=======
         <option value="$PROJECT_DIR$/ms-productos/pom.xml" />
         <option value="$PROJECT_DIR$/ms-proveedor/pom.xml" />
-        <option value="$PROJECT_DIR$/ms-ususarios/pom.xml" />
         <option value="$PROJECT_DIR$/ms-inventario/pom.xml" />
+        <option value="$PROJECT_DIR$/ms-pedidos/pom.xml" />
       </list>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="openjdk-26" project-jdk-type="JavaSDK">
->>>>>>> 51aa3bceb547344f63eee47f1725ae62b9506f9a
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_25" default="true" project-jdk-name="openjdk-25" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
