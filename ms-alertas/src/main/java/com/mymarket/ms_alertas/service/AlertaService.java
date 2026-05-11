@@ -22,7 +22,7 @@ public class AlertaService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     private static final String INVENTARIO_URL = "http://localhost:8083/api/v1/inventario/";
-    private static final String PRODUCTOS_URL = "http://localhost:8082/api/v1/productos/";
+    private static final String PRODUCTOS_URL = "http://localhost:8087/api/v1/productos/";
 
     public AlertaService(AlertaRepository alertaRepository) {
         this.alertaRepository = alertaRepository;
