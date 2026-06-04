@@ -5,7 +5,7 @@ import com.mymarket.ms_precios.dto.PrecioResponseDTO;
 import com.mymarket.ms_precios.model.Precio;
 import com.mymarket.ms_precios.model.Temporada;
 import com.mymarket.ms_precios.repository.PrecioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,8 +13,11 @@ import java.util.List;
 @Service
 public class PrecioService {
 
-    @Autowired
-    private PrecioRepository precioRepository;
+    private final PrecioRepository precioRepository;
+
+    public PrecioService(PrecioRepository precioRepository) {
+        this.precioRepository = precioRepository;
+    }
 
     private Double calcularPrecioFinal(Precio p) {
         if (p.getTipoDescuento() == null || p.getValorDescuento() == null) {
@@ -71,14 +74,14 @@ public class PrecioService {
 
     public PrecioResponseDTO buscarPorId(Long id) {
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Precio no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
         return toDTO(p);
     }
 
     public PrecioResponseDTO buscarPrecioActualDeProducto(Long productoId) {
         Precio p = precioRepository
                 .findTopByProductoIdAndActivoTrueOrderByFechaInicioDesc(productoId)
-                .orElseThrow(() -> new RuntimeException("No hay precio activo para este producto"));
+                .orElseThrow(() -> new EntityNotFoundException("No hay precio activo para el producto con id: " + productoId));
         return toDTO(p);
     }
 
@@ -88,7 +91,7 @@ public class PrecioService {
 
     public PrecioResponseDTO actualizar(Long id, PrecioRequestDTO dto) {
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Precio no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
         p.setPrecioBase(dto.getPrecioBase());
         p.setTipoDescuento(dto.getTipoDescuento());
         p.setValorDescuento(dto.getValorDescuento());
@@ -100,7 +103,7 @@ public class PrecioService {
 
     public void desactivar(Long id) {
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Precio no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
         p.setActivo(false);
         precioRepository.save(p);
     }

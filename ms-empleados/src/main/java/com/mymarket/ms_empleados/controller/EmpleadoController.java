@@ -6,7 +6,6 @@ import com.mymarket.ms_empleados.dto.EmpleadoResponseDTO;
 import com.mymarket.ms_empleados.model.Rol;
 import com.mymarket.ms_empleados.model.Turno;
 import com.mymarket.ms_empleados.service.EmpleadoService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +16,11 @@ import java.util.List;
 @RequestMapping("/api/empleados")
 public class EmpleadoController {
 
-    @Autowired
-    private EmpleadoService empleadoService;
+    private final EmpleadoService empleadoService;
+
+    public EmpleadoController(EmpleadoService empleadoService) {
+        this.empleadoService = empleadoService;
+    }
 
     @GetMapping
     public ResponseEntity<List<EmpleadoResponseDTO>> listarTodos() {

@@ -7,10 +7,12 @@ import com.mymarket.ms_alertas.model.EstadoAlerta;
 import com.mymarket.ms_alertas.model.TipoAlerta;
 import com.mymarket.ms_alertas.repository.AlertaRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,13 +21,19 @@ import java.util.List;
 public class AlertaService {
 
     private final AlertaRepository alertaRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient;
+    private final String inventarioUrl;
+    private final String productosUrl;
 
-    private static final String INVENTARIO_URL = "http://localhost:8083/api/v1/inventario/";
-    private static final String PRODUCTOS_URL = "http://localhost:8087/api/v1/productos/";
-
-    public AlertaService(AlertaRepository alertaRepository) {
+    public AlertaService(
+            AlertaRepository alertaRepository,
+            WebClient.Builder webClientBuilder,
+            @Value("${api.inventario.url}") String inventarioUrl,
+            @Value("${api.productos.url}") String productosUrl) {
         this.alertaRepository = alertaRepository;
+        this.webClient = webClientBuilder.build();
+        this.inventarioUrl = inventarioUrl;
+        this.productosUrl = productosUrl;
     }
 
     public List<AlertaModel> listarTodas() {
@@ -38,7 +46,6 @@ public class AlertaService {
     }
 
     public AlertaModel crearAlertaManual(AlertaModel alerta) {
-
         if (alerta.getActivo() == null) {
             alerta.setActivo(true);
         }
@@ -90,7 +97,6 @@ public class AlertaService {
     }
 
     public AlertaModel generarAlertaStock(Long inventarioId) {
-
         InventarioDTO inventario = obtenerInventario(inventarioId);
         ProductoDTO producto = obtenerProducto(inventario.getProductoId());
 
@@ -127,7 +133,6 @@ public class AlertaService {
     }
 
     public AlertaModel generarAlertaVencimiento(Long inventarioId) {
-
         InventarioDTO inventario = obtenerInventario(inventarioId);
         ProductoDTO producto = obtenerProducto(inventario.getProductoId());
 
@@ -164,10 +169,12 @@ public class AlertaService {
 
     private InventarioDTO obtenerInventario(Long inventarioId) {
         try {
-            InventarioDTO inventario = restTemplate.getForObject(
-                    INVENTARIO_URL + inventarioId,
-                    InventarioDTO.class
-            );
+            InventarioDTO inventario = webClient.get()
+                    .uri(inventarioUrl + inventarioId)
+                    .retrieve()
+                    .bodyToMono(InventarioDTO.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
             if (inventario == null || inventario.getId() == null) {
                 throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
@@ -175,17 +182,21 @@ public class AlertaService {
 
             return inventario;
 
-        } catch (RestClientException e) {
+        } catch (WebClientResponseException.NotFound e) {
+            throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo obtener el inventario con id: " + inventarioId);
         }
     }
 
     private ProductoDTO obtenerProducto(Long productoId) {
         try {
-            ProductoDTO producto = restTemplate.getForObject(
-                    PRODUCTOS_URL + productoId,
-                    ProductoDTO.class
-            );
+            ProductoDTO producto = webClient.get()
+                    .uri(productosUrl + productoId)
+                    .retrieve()
+                    .bodyToMono(ProductoDTO.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
             if (producto == null || producto.getId() == null) {
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
@@ -193,7 +204,9 @@ public class AlertaService {
 
             return producto;
 
-        } catch (RestClientException e) {
+        } catch (WebClientResponseException.NotFound e) {
+            throw new IllegalArgumentException("El producto no existe con id: " + productoId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo obtener el producto con id: " + productoId);
         }
     }

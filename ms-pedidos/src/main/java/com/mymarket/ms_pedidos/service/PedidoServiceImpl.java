@@ -2,7 +2,7 @@ package com.mymarket.ms_pedidos.service;
 
 import com.mymarket.ms_pedidos.model.Pedido;
 import com.mymarket.ms_pedidos.repository.PedidoRepo;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
@@ -10,8 +10,11 @@ import java.util.List;
 @Service
 public class PedidoServiceImpl implements IPedidoService {
 
-    @Autowired
-    private PedidoRepo repo;
+    private final PedidoRepo repo;
+
+    public PedidoServiceImpl(PedidoRepo repo) {
+        this.repo = repo;
+    }
 
     @Override
     public List<Pedido> listarTodos() {
@@ -20,27 +23,26 @@ public class PedidoServiceImpl implements IPedidoService {
 
     @Override
     public Pedido buscarPorId(Long id) {
-        return repo.findById(id).orElse(null);
+        return repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con id: " + id));
     }
 
     @Override
     public Pedido guardar(Pedido pedido) {
-        // Si no viene fecha, se asigna la fecha de hoy automáticamente
         if (pedido.getFechaPedido() == null) {
             pedido.setFechaPedido(LocalDate.now());
         }
-        // Si no viene estado, se asigna PENDIENTE por defecto
         if (pedido.getEstado() == null) {
             pedido.setEstado("PENDIENTE");
         }
-        // El estado siempre se guarda en mayúsculas
         pedido.setEstado(pedido.getEstado().toUpperCase());
         return repo.save(pedido);
     }
 
     @Override
     public void eliminar(Long id) {
-        repo.deleteById(id);
+        Pedido pedido = buscarPorId(id);
+        repo.deleteById(pedido.getId());
     }
 
     @Override

@@ -2,15 +2,18 @@ package com.mymarket.ms_proveedores.service;
 
 import com.mymarket.ms_proveedores.model.Proveedor;
 import com.mymarket.ms_proveedores.repository.ProveedorRepo;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
 public class ProveedorServiceImpl  implements IProveedorService{
 
-    @Autowired
-    private ProveedorRepo repo;
+    private final ProveedorRepo repo;
+
+    public ProveedorServiceImpl(ProveedorRepo repo) {
+        this.repo = repo;
+    }
 
     @Override
     public List<Proveedor> listarTodos(){
@@ -19,7 +22,8 @@ public class ProveedorServiceImpl  implements IProveedorService{
 
     @Override
     public Proveedor buscarPorId(Long id) {
-        return repo.findById(id).orElse(null);
+        return repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Proveedor no encontrado con id: " + id));
     }
 
     @Override
@@ -31,11 +35,13 @@ public class ProveedorServiceImpl  implements IProveedorService{
     }
     @Override
     public void eliminar(Long id) {
-        repo.deleteById(id);
+        Proveedor proveedor = buscarPorId(id);
+        repo.deleteById(proveedor.getId());
     }
 
     @Override
     public Proveedor buscarPorRut(String rut) {
-        return repo.findByRut(rut).orElse(null);
+        return repo.findByRut(rut)
+                .orElseThrow(() -> new EntityNotFoundException("Proveedor no encontrado con rut: " + rut));
     }
 }

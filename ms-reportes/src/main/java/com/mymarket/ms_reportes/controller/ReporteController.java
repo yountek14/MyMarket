@@ -2,7 +2,6 @@ package com.mymarket.ms_reportes.controller;
 
 import com.mymarket.ms_reportes.model.Reporte;
 import com.mymarket.ms_reportes.service.ReporteService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -10,8 +9,11 @@ import java.util.List;
 @RequestMapping("/api/reportes") // La URL base
 public class ReporteController {
 
-    @Autowired
-    private ReporteService reporteService;
+    private final ReporteService reporteService;
+
+    public ReporteController(ReporteService reporteService) {
+        this.reporteService = reporteService;
+    }
 
     @GetMapping // Escucha peticiones GET
     public List<Reporte> listar() {

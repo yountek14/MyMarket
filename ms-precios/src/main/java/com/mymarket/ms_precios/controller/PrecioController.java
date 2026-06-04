@@ -5,7 +5,6 @@ import com.mymarket.ms_precios.dto.PrecioResponseDTO;
 import com.mymarket.ms_precios.model.Temporada;
 import com.mymarket.ms_precios.service.PrecioService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import java.util.List;
 @RequestMapping("/api/precios")
 public class PrecioController {
 
-    @Autowired
-    private PrecioService precioService;
+    private final PrecioService precioService;
+
+    public PrecioController(PrecioService precioService) {
+        this.precioService = precioService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PrecioResponseDTO>> listarTodos() {

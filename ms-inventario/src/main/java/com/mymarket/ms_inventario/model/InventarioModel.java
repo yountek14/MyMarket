@@ -26,7 +26,8 @@ public class InventarioModel {
     private Long productoId;
 
     @NotBlank(message = "El lote es obligatorio.")
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 100)
+
     private String lote;
 
     @NotNull(message = "El stock actual es obligatorio.")

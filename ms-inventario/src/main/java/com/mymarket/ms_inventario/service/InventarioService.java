@@ -5,10 +5,12 @@ import com.mymarket.ms_inventario.model.EstadoInventario;
 import com.mymarket.ms_inventario.model.InventarioModel;
 import com.mymarket.ms_inventario.repository.InventarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,12 +18,16 @@ import java.util.List;
 public class InventarioService {
 
     private final InventarioRepository inventarioRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient;
+    private final String productosUrl;
 
-    private static final String PRODUCTOS_URL = "http://localhost:8087/api/v1/productos/";
-
-    public InventarioService(InventarioRepository inventarioRepository) {
+    public InventarioService(
+            InventarioRepository inventarioRepository,
+            WebClient.Builder webClientBuilder,
+            @Value("${api.productos.url}") String productosUrl) {
         this.inventarioRepository = inventarioRepository;
+        this.webClient = webClientBuilder.build();
+        this.productosUrl = productosUrl;
     }
 
     public List<InventarioModel> listarTodos() {
@@ -34,7 +40,6 @@ public class InventarioService {
     }
 
     public InventarioModel guardar(InventarioModel inventario) {
-
         validarProductoExiste(inventario.getProductoId());
 
         if (inventarioRepository.existsByLote(inventario.getLote())) {
@@ -51,7 +56,6 @@ public class InventarioService {
     }
 
     public InventarioModel actualizar(Long id, InventarioModel inventarioActualizado) {
-
         validarProductoExiste(inventarioActualizado.getProductoId());
 
         InventarioModel inventarioExistente = buscarPorId(id);
@@ -78,7 +82,6 @@ public class InventarioService {
     }
 
     public InventarioModel registrarEntrada(Long id, Integer cantidad) {
-
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad de entrada debe ser mayor a 0.");
         }
@@ -92,7 +95,6 @@ public class InventarioService {
     }
 
     public InventarioModel registrarSalida(Long id, Integer cantidad) {
-
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad de salida debe ser mayor a 0.");
         }
@@ -111,7 +113,6 @@ public class InventarioService {
     }
 
     public InventarioModel registrarMerma(Long id, Integer cantidad) {
-
         if (cantidad == null || cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad de merma debe ser mayor a 0.");
         }
@@ -151,7 +152,6 @@ public class InventarioService {
     }
 
     public List<InventarioModel> buscarPorVencer(Integer dias) {
-
         if (dias == null || dias <= 0) {
             dias = 7;
         }
@@ -163,7 +163,6 @@ public class InventarioService {
     }
 
     public List<InventarioModel> buscarStockBajo(Integer stockLimite) {
-
         if (stockLimite == null || stockLimite < 0) {
             throw new IllegalArgumentException("El límite de stock no puede ser negativo.");
         }
@@ -172,16 +171,17 @@ public class InventarioService {
     }
 
     private ProductoDTO validarProductoExiste(Long productoId) {
-
         if (productoId == null) {
             throw new IllegalArgumentException("El ID del producto es obligatorio.");
         }
 
         try {
-            ProductoDTO producto = restTemplate.getForObject(
-                    PRODUCTOS_URL + productoId,
-                    ProductoDTO.class
-            );
+            ProductoDTO producto = webClient.get()
+                    .uri(productosUrl + productoId)
+                    .retrieve()
+                    .bodyToMono(ProductoDTO.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
             if (producto == null || producto.getId() == null) {
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
@@ -189,13 +189,14 @@ public class InventarioService {
 
             return producto;
 
-        } catch (RestClientException e) {
+        } catch (WebClientResponseException.NotFound e) {
+            throw new IllegalArgumentException("El producto no existe con id: " + productoId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo validar el producto con id: " + productoId);
         }
     }
 
     private void actualizarEstadoAutomatico(InventarioModel inventario) {
-
         if (inventario.getFechaVencimiento().isBefore(LocalDate.now())) {
             inventario.setEstado(EstadoInventario.VENCIDO);
         } else if (inventario.getStockActual() == 0) {

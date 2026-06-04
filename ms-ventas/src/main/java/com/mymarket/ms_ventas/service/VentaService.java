@@ -6,10 +6,12 @@ import com.mymarket.ms_ventas.model.EstadoVenta;
 import com.mymarket.ms_ventas.model.VentaModel;
 import com.mymarket.ms_ventas.repository.VentaRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,13 +19,19 @@ import java.util.List;
 public class VentaService {
 
     private final VentaRepository ventaRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient;
+    private final String productosUrl;
+    private final String inventarioUrl;
 
-    private static final String PRODUCTOS_URL = "http://localhost:8087/api/v1/productos/";
-    private static final String INVENTARIO_URL = "http://localhost:8083/api/v1/inventario/";
-
-    public VentaService(VentaRepository ventaRepository) {
+    public VentaService(
+            VentaRepository ventaRepository,
+            WebClient.Builder webClientBuilder,
+            @Value("${api.productos.url}") String productosUrl,
+            @Value("${api.inventario.url}") String inventarioUrl) {
         this.ventaRepository = ventaRepository;
+        this.webClient = webClientBuilder.build();
+        this.productosUrl = productosUrl;
+        this.inventarioUrl = inventarioUrl;
     }
 
     public List<VentaModel> listarTodos() {
@@ -36,7 +44,6 @@ public class VentaService {
     }
 
     public VentaModel registrarVenta(VentaModel venta) {
-
         ProductoDTO producto = validarProductoExiste(venta.getProductoId());
         InventarioDTO inventario = validarInventarioExiste(venta.getInventarioId());
 
@@ -123,10 +130,12 @@ public class VentaService {
         }
 
         try {
-            ProductoDTO producto = restTemplate.getForObject(
-                    PRODUCTOS_URL + productoId,
-                    ProductoDTO.class
-            );
+            ProductoDTO producto = webClient.get()
+                    .uri(productosUrl + productoId)
+                    .retrieve()
+                    .bodyToMono(ProductoDTO.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
             if (producto == null || producto.getId() == null) {
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
@@ -134,7 +143,9 @@ public class VentaService {
 
             return producto;
 
-        } catch (RestClientException e) {
+        } catch (WebClientResponseException.NotFound e) {
+            throw new IllegalArgumentException("El producto no existe con id: " + productoId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo validar el producto con id: " + productoId);
         }
     }
@@ -145,10 +156,12 @@ public class VentaService {
         }
 
         try {
-            InventarioDTO inventario = restTemplate.getForObject(
-                    INVENTARIO_URL + inventarioId,
-                    InventarioDTO.class
-            );
+            InventarioDTO inventario = webClient.get()
+                    .uri(inventarioUrl + inventarioId)
+                    .retrieve()
+                    .bodyToMono(InventarioDTO.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
             if (inventario == null || inventario.getId() == null) {
                 throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
@@ -156,7 +169,9 @@ public class VentaService {
 
             return inventario;
 
-        } catch (RestClientException e) {
+        } catch (WebClientResponseException.NotFound e) {
+            throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo validar el inventario con id: " + inventarioId);
         }
     }
@@ -167,12 +182,14 @@ public class VentaService {
         }
 
         try {
-            restTemplate.put(
-                    INVENTARIO_URL + inventarioId + "/salida?cantidad=" + cantidad,
-                    null
-            );
+            webClient.put()
+                    .uri(inventarioUrl + inventarioId + "/salida?cantidad=" + cantidad)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
 
-        } catch (RestClientException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("No se pudo descontar stock del inventario. Verifique stock disponible.");
         }
     }

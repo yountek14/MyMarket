@@ -6,15 +6,19 @@ import com.mymarket.ms_empleados.model.Empleado;
 import com.mymarket.ms_empleados.model.Rol;
 import com.mymarket.ms_empleados.model.Turno;
 import com.mymarket.ms_empleados.repository.EmpleadoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class EmpleadoService {
-    @Autowired
-    private EmpleadoRepository empleadoRepository;
+
+    private final EmpleadoRepository empleadoRepository;
+
+    public EmpleadoService(EmpleadoRepository empleadoRepository) {
+        this.empleadoRepository = empleadoRepository;
+    }
 
     private Empleado toEntity(EmpleadoRequestDTO dto){
         Empleado e = new Empleado();
@@ -63,29 +67,29 @@ public class EmpleadoService {
 
     public EmpleadoResponseDTO buscarPorId(Long id) {
         Empleado e = empleadoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
         return toDTO(e);
     }
 
     public EmpleadoResponseDTO buscarPorUsuarioId(Long usuarioId) {
         Empleado e = empleadoRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con usuarioId: " + usuarioId));
         return toDTO(e);
     }
 
     public EmpleadoResponseDTO crear(EmpleadoRequestDTO dto) {
         if (empleadoRepository.findByRut(dto.getRut()).isPresent()) {
-            throw new RuntimeException("Ya existe un empleado con ese RUT");
+            throw new IllegalArgumentException("Ya existe un empleado con ese RUT");
         }
         if (empleadoRepository.findByUsuarioId(dto.getUsuarioId()).isPresent()) {
-            throw new RuntimeException("Ese usuario ya tiene un empleado asignado");
+            throw new IllegalArgumentException("Ese usuario ya tiene un empleado asignado");
         }
         return toDTO(empleadoRepository.save(toEntity(dto)));
     }
 
     public EmpleadoResponseDTO actualizar(Long id, EmpleadoRequestDTO dto) {
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
         empleado.setNombre(dto.getNombre());
         empleado.setApellido(dto.getApellido());
         empleado.setTelefono(dto.getTelefono());
@@ -96,7 +100,7 @@ public class EmpleadoService {
 
     public void desactivar(Long id) {
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Empleado no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
         empleado.setActivo(false);
         empleadoRepository.save(empleado);
     }

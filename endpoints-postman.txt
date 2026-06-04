@@ -1,0 +1,507 @@
+=====================================================================
+  ENDPOINTS MyMarket - Pruebas en Postman
+  Puerto por microservicio:
+    ms-proveedores : 8080     ms-pedidos : 8081
+    ms-empleados   : 8082     ms-inventario: 8083
+    ms-ventas      : 8084     ms-alertas   : 8085
+    ms-precios     : 8086     ms-productos : 8087
+    ms-usuario     : 8088     ms-reportes  : 8089
+=====================================================================
+
+=====================================================================
+  1. ms-PRODUCTOS (puerto 8087)
+=====================================================================
+
+--- POST: Crear producto ---
+POST http://localhost:8087/api/v1/productos
+Content-Type: application/json
+
+{
+  "nombreProducto": "Leche Entera",
+  "categoria": "Lácteos",
+  "unidadMedida": "UNIDAD",
+  "precioBase": 1200,
+  "activo": true,
+  "descripcionProducto": "Leche entera 1 litro",
+  "fechaCaducidad": "2026-06-30"
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8087/api/v1/productos
+
+--- GET: Buscar por ID ---
+GET http://localhost:8087/api/v1/productos/1
+
+--- GET: Buscar por categoría ---
+GET http://localhost:8087/api/v1/productos/categoria/Lácteos
+
+--- GET: Buscar por nombre ---
+GET http://localhost:8087/api/v1/productos/buscar?nombreProducto=Leche
+
+--- GET: Buscar por activo ---
+GET http://localhost:8087/api/v1/productos/activo/true
+
+--- GET: Buscar por unidad de medida ---
+GET http://localhost:8087/api/v1/productos/unidad/UNIDAD
+
+--- PUT: Actualizar producto ---
+PUT http://localhost:8087/api/v1/productos/1
+Content-Type: application/json
+
+{
+  "nombreProducto": "Leche Descremada",
+  "categoria": "Lácteos",
+  "unidadMedida": "UNIDAD",
+  "precioBase": 1300,
+  "activo": true,
+  "descripcionProducto": "Leche descremada 1 litro",
+  "fechaCaducidad": "2026-07-15"
+}
+
+--- DELETE: Eliminación lógica ---
+DELETE http://localhost:8087/api/v1/productos/1
+
+=====================================================================
+  2. ms-INVENTARIO (puerto 8083)
+=====================================================================
+
+--- POST: Crear inventario ---
+POST http://localhost:8083/api/v1/inventario
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "lote": "LOTE-001",
+  "stockActual": 100,
+  "stockMinimo": 10,
+  "stockMaximo": 500,
+  "merma": 0,
+  "fechaIngreso": "2026-05-01",
+  "fechaVencimiento": "2026-08-01",
+  "estado": "DISPONIBLE",
+  "activo": true
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8083/api/v1/inventario
+
+--- GET: Buscar por ID ---
+GET http://localhost:8083/api/v1/inventario/1
+
+--- GET: Buscar por producto ---
+GET http://localhost:8083/api/v1/inventario/producto/1
+
+--- GET: Buscar por lote ---
+GET http://localhost:8083/api/v1/inventario/lote/LOTE-001
+
+--- GET: Buscar por estado ---
+GET http://localhost:8083/api/v1/inventario/estado/DISPONIBLE
+
+--- GET: Buscar por activo ---
+GET http://localhost:8083/api/v1/inventario/activo/true
+
+--- GET: Buscar vencidos ---
+GET http://localhost:8083/api/v1/inventario/vencidos
+
+--- GET: Buscar por vencer (por defecto 7 días) ---
+GET http://localhost:8083/api/v1/inventario/por-vencer?dias=10
+
+--- GET: Buscar stock bajo ---
+GET http://localhost:8083/api/v1/inventario/stock-bajo?stockLimite=15
+
+--- PUT: Actualizar inventario ---
+PUT http://localhost:8083/api/v1/inventario/1
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "lote": "LOTE-001",
+  "stockActual": 120,
+  "stockMinimo": 10,
+  "stockMaximo": 500,
+  "merma": 0,
+  "fechaIngreso": "2026-05-01",
+  "fechaVencimiento": "2026-08-01",
+  "estado": "DISPONIBLE",
+  "activo": true
+}
+
+--- PUT: Registrar entrada de stock ---
+PUT http://localhost:8083/api/v1/inventario/1/entrada?cantidad=50
+
+--- PUT: Registrar salida de stock ---
+PUT http://localhost:8083/api/v1/inventario/1/salida?cantidad=20
+
+--- PUT: Registrar merma ---
+PUT http://localhost:8083/api/v1/inventario/1/merma?cantidad=2
+
+--- DELETE: Eliminación lógica ---
+DELETE http://localhost:8083/api/v1/inventario/1
+
+=====================================================================
+  3. ms-VENTAS (puerto 8084)
+=====================================================================
+
+--- POST: Registrar venta ---
+POST http://localhost:8084/api/v1/ventas
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "inventarioId": 1,
+  "cantidadVendida": 5,
+  "precioUnitario": 1200,
+  "activo": true
+}
+
+--- GET: Listar todas ---
+GET http://localhost:8084/api/v1/ventas
+
+--- GET: Buscar por ID ---
+GET http://localhost:8084/api/v1/ventas/1
+
+--- GET: Buscar por producto ---
+GET http://localhost:8084/api/v1/ventas/producto/1
+
+--- GET: Buscar por inventario ---
+GET http://localhost:8084/api/v1/ventas/inventario/1
+
+--- GET: Buscar por estado ---
+GET http://localhost:8084/api/v1/ventas/estado/REGISTRADA
+
+--- GET: Buscar por activo ---
+GET http://localhost:8084/api/v1/ventas/activo/true
+
+--- GET: Buscar por rango de fechas ---
+GET http://localhost:8084/api/v1/ventas/fechas?inicio=2026-05-01T00:00:00&fin=2026-05-31T23:59:59
+
+--- PUT: Actualizar venta ---
+PUT http://localhost:8084/api/v1/ventas/1
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "inventarioId": 1,
+  "cantidadVendida": 3,
+  "precioUnitario": 1200,
+  "estado": "REGISTRADA",
+  "activo": true
+}
+
+--- PUT: Pagar venta ---
+PUT http://localhost:8084/api/v1/ventas/1/pagar
+
+--- PUT: Anular venta ---
+PUT http://localhost:8084/api/v1/ventas/1/anular
+
+--- DELETE: Eliminación lógica ---
+DELETE http://localhost:8084/api/v1/ventas/1
+
+=====================================================================
+  4. ms-ALERTAS (puerto 8085)
+=====================================================================
+
+--- POST: Crear alerta manual ---
+POST http://localhost:8085/api/v1/alertas
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "inventarioId": 1,
+  "tipoAlerta": "STOCK_BAJO",
+  "estadoAlerta": "PENDIENTE",
+  "mensaje": "Stock bajo del producto",
+  "activo": true
+}
+
+--- GET: Listar todas ---
+GET http://localhost:8085/api/v1/alertas
+
+--- GET: Buscar por ID ---
+GET http://localhost:8085/api/v1/alertas/1
+
+--- GET: Buscar por producto ---
+GET http://localhost:8085/api/v1/alertas/producto/1
+
+--- GET: Buscar por inventario ---
+GET http://localhost:8085/api/v1/alertas/inventario/1
+
+--- GET: Buscar por tipo ---
+GET http://localhost:8085/api/v1/alertas/tipo/STOCK_BAJO
+
+--- GET: Buscar por estado ---
+GET http://localhost:8085/api/v1/alertas/estado/PENDIENTE
+
+--- GET: Buscar por activo ---
+GET http://localhost:8085/api/v1/alertas/activo/true
+
+--- POST: Generar alerta de stock automática ---
+POST http://localhost:8085/api/v1/alertas/generar-stock/1
+
+--- POST: Generar alerta de vencimiento automática ---
+POST http://localhost:8085/api/v1/alertas/generar-vencimiento/1
+
+--- PUT: Resolver alerta ---
+PUT http://localhost:8085/api/v1/alertas/1/resolver
+
+--- DELETE: Eliminación lógica ---
+DELETE http://localhost:8085/api/v1/alertas/1
+
+=====================================================================
+  5. ms-PRECIOS (puerto 8086)
+=====================================================================
+
+--- POST: Crear precio ---
+POST http://localhost:8086/api/precios
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "precioBase": 1200,
+  "tipoDescuento": "PORCENTAJE",
+  "valorDescuento": 10,
+  "temporada": "VERANO",
+  "fechaInicio": "2026-01-01",
+  "fechaFin": "2026-03-31"
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8086/api/precios
+
+--- GET: Listar activos ---
+GET http://localhost:8086/api/precios/activos
+
+--- GET: Buscar por ID ---
+GET http://localhost:8086/api/precios/1
+
+--- GET: Precios por producto ---
+GET http://localhost:8086/api/precios/producto/1
+
+--- GET: Precio actual del producto ---
+GET http://localhost:8086/api/precios/producto/1/actual
+
+--- GET: Precios por temporada ---
+GET http://localhost:8086/api/precios/temporada/VERANO
+
+--- PUT: Actualizar precio ---
+PUT http://localhost:8086/api/precios/1
+Content-Type: application/json
+
+{
+  "productoId": 1,
+  "precioBase": 1500,
+  "tipoDescuento": "FIJO",
+  "valorDescuento": 100,
+  "temporada": "OTOÑO",
+  "fechaInicio": "2026-04-01",
+  "fechaFin": "2026-06-30"
+}
+
+--- DELETE: Desactivar precio ---
+DELETE http://localhost:8086/api/precios/1
+
+=====================================================================
+  6. ms-PROVEEDORES (puerto 8080)
+=====================================================================
+
+--- POST: Crear proveedor ---
+POST http://localhost:8080/api/proveedores
+Content-Type: application/json
+
+{
+  "rut": "76.123.456-7",
+  "nombre": "Distribuidora Los Angeles",
+  "direccion": "Av. Principal 123",
+  "telefono": "+56 9 1234 5678",
+  "email": "contacto@distribuidora.cl",
+  "rubro": "Alimentos"
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8080/api/proveedores
+
+--- GET: Buscar por ID ---
+GET http://localhost:8080/api/proveedores/1
+
+--- GET: Buscar por RUT ---
+GET http://localhost:8080/api/proveedores/rut/76.123.456-7
+
+--- PUT: Actualizar proveedor ---
+PUT http://localhost:8080/api/proveedores/1
+Content-Type: application/json
+
+{
+  "rut": "76.123.456-7",
+  "nombre": "Distribuidora Los Angeles Actualizada",
+  "direccion": "Av. Secundaria 456",
+  "telefono": "+56 9 9876 5432",
+  "email": "nuevo@distribuidora.cl",
+  "rubro": "Bebidas"
+}
+
+--- DELETE: Eliminar proveedor ---
+DELETE http://localhost:8080/api/proveedores/1
+
+=====================================================================
+  7. ms-PEDIDOS (puerto 8081)
+=====================================================================
+
+--- POST: Crear pedido ---
+POST http://localhost:8081/api/pedidos
+Content-Type: application/json
+
+{
+  "total": 15000,
+  "proveedorId": 1,
+  "usuarioId": 1,
+  "empleadoId": 1,
+  "observacion": "Pedido urgente"
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8081/api/pedidos
+
+--- GET: Buscar por ID ---
+GET http://localhost:8081/api/pedidos/1
+
+--- GET: Buscar por estado ---
+GET http://localhost:8081/api/pedidos/estado/PENDIENTE
+
+--- GET: Buscar por proveedor ---
+GET http://localhost:8081/api/pedidos/proveedor/1
+
+--- PUT: Actualizar pedido ---
+PUT http://localhost:8081/api/pedidos/1
+Content-Type: application/json
+
+{
+  "fechaPedido": "2026-05-25",
+  "estado": "ENTREGADO",
+  "total": 20000,
+  "proveedorId": 1,
+  "usuarioId": 1,
+  "empleadoId": 1,
+  "observacion": "Pedido entregado"
+}
+
+--- DELETE: Eliminar pedido ---
+DELETE http://localhost:8081/api/pedidos/1
+
+=====================================================================
+  8. ms-EMPLEADOS (puerto 8082)
+=====================================================================
+
+--- POST: Crear empleado ---
+POST http://localhost:8082/api/empleados
+Content-Type: application/json
+
+{
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "rut": "12.345.678-9",
+  "telefono": "+56 9 1111 2222",
+  "rol": "CAJERO",
+  "turno": "MAÑANA",
+  "fechaContratacion": "2026-01-15",
+  "usuarioId": 1
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8082/api/empleados
+
+--- GET: Listar activos ---
+GET http://localhost:8082/api/empleados/activos
+
+--- GET: Buscar por ID ---
+GET http://localhost:8082/api/empleados/1
+
+--- GET: Buscar por rol ---
+GET http://localhost:8082/api/empleados/rol/CAJERO
+
+--- GET: Buscar por turno ---
+GET http://localhost:8082/api/empleados/turno/MAÑANA
+
+--- GET: Buscar por usuarioId ---
+GET http://localhost:8082/api/empleados/usuario/1
+
+--- PUT: Actualizar empleado ---
+PUT http://localhost:8082/api/empleados/1
+Content-Type: application/json
+
+{
+  "nombre": "Juan",
+  "apellido": "Pérez González",
+  "rut": "12.345.678-9",
+  "telefono": "+56 9 3333 4444",
+  "rol": "ADMIN",
+  "turno": "TARDE",
+  "fechaContratacion": "2026-01-15",
+  "usuarioId": 1
+}
+
+--- DELETE: Desactivar empleado ---
+DELETE http://localhost:8082/api/empleados/1
+
+=====================================================================
+  9. ms-USUARIO (puerto 8088)
+=====================================================================
+
+--- POST: Crear usuario ---
+POST http://localhost:8088/api/usuarios
+Content-Type: application/json
+
+{
+  "nombre": "admin",
+  "email": "admin@mymarket.cl",
+  "password": "123456",
+  "rol": "ADMIN",
+  "activo": true
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8088/api/usuarios
+
+--- GET: Buscar por ID ---
+GET http://localhost:8088/api/usuarios/1
+
+--- PUT: Actualizar usuario ---
+PUT http://localhost:8088/api/usuarios/1
+Content-Type: application/json
+
+{
+  "nombre": "admin actualizado",
+  "email": "admin@mymarket.cl",
+  "rol": "ADMIN"
+}
+
+--- DELETE: Desactivar usuario ---
+DELETE http://localhost:8088/api/usuarios/1
+
+=====================================================================
+  10. ms-REPORTES (puerto 8089)
+=====================================================================
+
+--- POST: Crear reporte ---
+POST http://localhost:8089/api/reportes
+Content-Type: application/json
+
+{
+  "tipo": "VENTAS_DIARIAS",
+  "montoTotal": 150000,
+  "periodoInicio": "2026-05-01T00:00:00",
+  "periodoFin": "2026-05-31T23:59:59",
+  "generadoPor": "admin",
+  "sucursalId": 1,
+  "cantidadRegistros": 45
+}
+
+--- GET: Listar todos ---
+GET http://localhost:8089/api/reportes
+
+=====================================================================
+  NOTA: Para probar, primero crea un producto (ms-productos)
+  y luego usa ese ID en inventario, ventas, alertas y precios.
+  El orden recomendado es:
+    1. Productos    2. Inventario    3. Ventas / Alertas / Precios
+    4. Proveedores  5. Pedidos       6. Empleados / Usuarios
+=====================================================================
