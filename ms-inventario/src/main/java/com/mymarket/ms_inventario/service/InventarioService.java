@@ -5,6 +5,8 @@ import com.mymarket.ms_inventario.model.EstadoInventario;
 import com.mymarket.ms_inventario.model.InventarioModel;
 import com.mymarket.ms_inventario.repository.InventarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @Service
 public class InventarioService {
+
+    private static final Logger log = LoggerFactory.getLogger(InventarioService.class);
 
     private final InventarioRepository inventarioRepository;
     private final WebClient webClient;
@@ -35,14 +39,19 @@ public class InventarioService {
     }
 
     public InventarioModel buscarPorId(Long id) {
+        log.info("Buscando inventario por id: {}", id);
         return inventarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Inventario no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Inventario no encontrado con id: {}", id);
+                    return new EntityNotFoundException("Inventario no encontrado con id: " + id);
+                });
     }
 
     public InventarioModel guardar(InventarioModel inventario) {
         validarProductoExiste(inventario.getProductoId());
 
         if (inventarioRepository.existsByLote(inventario.getLote())) {
+            log.warn("Intento de crear inventario con lote duplicado: {}", inventario.getLote());
             throw new IllegalArgumentException("Ya existe un inventario registrado con el lote: " + inventario.getLote());
         }
 
@@ -52,7 +61,9 @@ public class InventarioService {
 
         actualizarEstadoAutomatico(inventario);
 
-        return inventarioRepository.save(inventario);
+        InventarioModel guardado = inventarioRepository.save(inventario);
+        log.info("Inventario creado con id: {}, lote: {}", guardado.getId(), guardado.getLote());
+        return guardado;
     }
 
     public InventarioModel actualizar(Long id, InventarioModel inventarioActualizado) {
@@ -72,17 +83,21 @@ public class InventarioService {
 
         actualizarEstadoAutomatico(inventarioExistente);
 
-        return inventarioRepository.save(inventarioExistente);
+        InventarioModel actualizado = inventarioRepository.save(inventarioExistente);
+        log.info("Inventario actualizado con id: {}", id);
+        return actualizado;
     }
 
     public void eliminarLogico(Long id) {
         InventarioModel inventario = buscarPorId(id);
         inventario.setActivo(false);
         inventarioRepository.save(inventario);
+        log.info("Inventario eliminado (logico) con id: {}", id);
     }
 
     public InventarioModel registrarEntrada(Long id, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
+            log.warn("Cantidad de entrada invalida: {} para inventario id: {}", cantidad, id);
             throw new IllegalArgumentException("La cantidad de entrada debe ser mayor a 0.");
         }
 
@@ -91,17 +106,21 @@ public class InventarioService {
 
         actualizarEstadoAutomatico(inventario);
 
-        return inventarioRepository.save(inventario);
+        InventarioModel actualizado = inventarioRepository.save(inventario);
+        log.info("Entrada registrada - inventarioId: {}, cantidad: {}, stockActual: {}", id, cantidad, actualizado.getStockActual());
+        return actualizado;
     }
 
     public InventarioModel registrarSalida(Long id, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
+            log.warn("Cantidad de salida invalida: {} para inventario id: {}", cantidad, id);
             throw new IllegalArgumentException("La cantidad de salida debe ser mayor a 0.");
         }
 
         InventarioModel inventario = buscarPorId(id);
 
         if (inventario.getStockActual() < cantidad) {
+            log.warn("Stock insuficiente - inventarioId: {}, stockActual: {}, solicitado: {}", id, inventario.getStockActual(), cantidad);
             throw new IllegalArgumentException("Stock insuficiente. Stock actual: " + inventario.getStockActual());
         }
 
@@ -109,17 +128,21 @@ public class InventarioService {
 
         actualizarEstadoAutomatico(inventario);
 
-        return inventarioRepository.save(inventario);
+        InventarioModel actualizado = inventarioRepository.save(inventario);
+        log.info("Salida registrada - inventarioId: {}, cantidad: {}, stockActual: {}", id, cantidad, actualizado.getStockActual());
+        return actualizado;
     }
 
     public InventarioModel registrarMerma(Long id, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
+            log.warn("Cantidad de merma invalida: {} para inventario id: {}", cantidad, id);
             throw new IllegalArgumentException("La cantidad de merma debe ser mayor a 0.");
         }
 
         InventarioModel inventario = buscarPorId(id);
 
         if (inventario.getStockActual() < cantidad) {
+            log.warn("Merma excede stock - inventarioId: {}, stockActual: {}, merma: {}", id, inventario.getStockActual(), cantidad);
             throw new IllegalArgumentException("No se puede registrar merma mayor al stock actual.");
         }
 
@@ -128,7 +151,9 @@ public class InventarioService {
 
         actualizarEstadoAutomatico(inventario);
 
-        return inventarioRepository.save(inventario);
+        InventarioModel actualizado = inventarioRepository.save(inventario);
+        log.info("Merma registrada - inventarioId: {}, cantidad: {}, mermaTotal: {}, stockActual: {}", id, cantidad, actualizado.getMerma(), actualizado.getStockActual());
+        return actualizado;
     }
 
     public List<InventarioModel> buscarPorProductoId(Long productoId) {
@@ -164,6 +189,7 @@ public class InventarioService {
 
     public List<InventarioModel> buscarStockBajo(Integer stockLimite) {
         if (stockLimite == null || stockLimite < 0) {
+            log.warn("Limite de stock invalido: {}", stockLimite);
             throw new IllegalArgumentException("El límite de stock no puede ser negativo.");
         }
 
@@ -172,6 +198,7 @@ public class InventarioService {
 
     private ProductoDTO validarProductoExiste(Long productoId) {
         if (productoId == null) {
+            log.warn("ID de producto es null");
             throw new IllegalArgumentException("El ID del producto es obligatorio.");
         }
 
@@ -184,14 +211,17 @@ public class InventarioService {
                     .block();
 
             if (producto == null || producto.getId() == null) {
+                log.warn("Producto no encontrado con id: {}", productoId);
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
             }
 
             return producto;
 
         } catch (WebClientResponseException.NotFound e) {
+            log.warn("Producto no encontrado via WebClient - id: {}", productoId);
             throw new IllegalArgumentException("El producto no existe con id: " + productoId);
         } catch (Exception e) {
+            log.error("Error al validar producto con id: {}", productoId, e);
             throw new IllegalArgumentException("No se pudo validar el producto con id: " + productoId);
         }
     }
