@@ -6,12 +6,16 @@ import com.mymarket.ms_precios.model.Precio;
 import com.mymarket.ms_precios.model.Temporada;
 import com.mymarket.ms_precios.repository.PrecioRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class PrecioService {
+
+    private static final Logger log = LoggerFactory.getLogger(PrecioService.class);
 
     private final PrecioRepository precioRepository;
 
@@ -73,38 +77,57 @@ public class PrecioService {
     }
 
     public PrecioResponseDTO buscarPorId(Long id) {
+        log.info("Buscando precio por id: {}", id);
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Precio no encontrado con id: {}", id);
+                    return new EntityNotFoundException("Precio no encontrado con id: " + id);
+                });
         return toDTO(p);
     }
 
     public PrecioResponseDTO buscarPrecioActualDeProducto(Long productoId) {
+        log.info("Buscando precio activo del producto: {}", productoId);
         Precio p = precioRepository
                 .findTopByProductoIdAndActivoTrueOrderByFechaInicioDesc(productoId)
-                .orElseThrow(() -> new EntityNotFoundException("No hay precio activo para el producto con id: " + productoId));
+                .orElseThrow(() -> {
+                    log.warn("No hay precio activo para el producto: {}", productoId);
+                    return new EntityNotFoundException("No hay precio activo para el producto con id: " + productoId);
+                });
         return toDTO(p);
     }
 
     public PrecioResponseDTO crear(PrecioRequestDTO dto) {
-        return toDTO(precioRepository.save(toEntity(dto)));
+        PrecioResponseDTO creado = toDTO(precioRepository.save(toEntity(dto)));
+        log.info("Precio creado con id: {}, productoId: {}", creado.getId(), creado.getProductoId());
+        return creado;
     }
 
     public PrecioResponseDTO actualizar(Long id, PrecioRequestDTO dto) {
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Precio no encontrado para actualizar - id: {}", id);
+                    return new EntityNotFoundException("Precio no encontrado con id: " + id);
+                });
         p.setPrecioBase(dto.getPrecioBase());
         p.setTipoDescuento(dto.getTipoDescuento());
         p.setValorDescuento(dto.getValorDescuento());
         p.setTemporada(dto.getTemporada());
         p.setFechaInicio(dto.getFechaInicio());
         p.setFechaFin(dto.getFechaFin());
-        return toDTO(precioRepository.save(p));
+        PrecioResponseDTO actualizado = toDTO(precioRepository.save(p));
+        log.info("Precio actualizado con id: {}", id);
+        return actualizado;
     }
 
     public void desactivar(Long id) {
         Precio p = precioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Precio no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Precio no encontrado para desactivar - id: {}", id);
+                    return new EntityNotFoundException("Precio no encontrado con id: " + id);
+                });
         p.setActivo(false);
         precioRepository.save(p);
+        log.info("Precio desactivado con id: {}", id);
     }
 }

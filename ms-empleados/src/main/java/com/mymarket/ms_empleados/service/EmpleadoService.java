@@ -7,12 +7,16 @@ import com.mymarket.ms_empleados.model.Rol;
 import com.mymarket.ms_empleados.model.Turno;
 import com.mymarket.ms_empleados.repository.EmpleadoRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class EmpleadoService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmpleadoService.class);
 
     private final EmpleadoRepository empleadoRepository;
 
@@ -66,42 +70,63 @@ public class EmpleadoService {
     }
 
     public EmpleadoResponseDTO buscarPorId(Long id) {
+        log.info("Buscando empleado por id: {}", id);
         Empleado e = empleadoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Empleado no encontrado con id: {}", id);
+                    return new EntityNotFoundException("Empleado no encontrado con id: " + id);
+                });
         return toDTO(e);
     }
 
     public EmpleadoResponseDTO buscarPorUsuarioId(Long usuarioId) {
+        log.info("Buscando empleado por usuarioId: {}", usuarioId);
         Empleado e = empleadoRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con usuarioId: " + usuarioId));
+                .orElseThrow(() -> {
+                    log.warn("Empleado no encontrado con usuarioId: {}", usuarioId);
+                    return new EntityNotFoundException("Empleado no encontrado con usuarioId: " + usuarioId);
+                });
         return toDTO(e);
     }
 
     public EmpleadoResponseDTO crear(EmpleadoRequestDTO dto) {
         if (empleadoRepository.findByRut(dto.getRut()).isPresent()) {
+            log.warn("Intento de crear empleado con RUT duplicado: {}", dto.getRut());
             throw new IllegalArgumentException("Ya existe un empleado con ese RUT");
         }
         if (empleadoRepository.findByUsuarioId(dto.getUsuarioId()).isPresent()) {
+            log.warn("Intento de crear empleado con usuarioId duplicado: {}", dto.getUsuarioId());
             throw new IllegalArgumentException("Ese usuario ya tiene un empleado asignado");
         }
-        return toDTO(empleadoRepository.save(toEntity(dto)));
+        EmpleadoResponseDTO creado = toDTO(empleadoRepository.save(toEntity(dto)));
+        log.info("Empleado creado con id: {}, rut: {}", creado.getId(), dto.getRut());
+        return creado;
     }
 
     public EmpleadoResponseDTO actualizar(Long id, EmpleadoRequestDTO dto) {
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Empleado no encontrado para actualizar - id: {}", id);
+                    return new EntityNotFoundException("Empleado no encontrado con id: " + id);
+                });
         empleado.setNombre(dto.getNombre());
         empleado.setApellido(dto.getApellido());
         empleado.setTelefono(dto.getTelefono());
         empleado.setRol(dto.getRol());
         empleado.setTurno(dto.getTurno());
-        return toDTO(empleadoRepository.save(empleado));
+        EmpleadoResponseDTO actualizado = toDTO(empleadoRepository.save(empleado));
+        log.info("Empleado actualizado con id: {}", id);
+        return actualizado;
     }
 
     public void desactivar(Long id) {
         Empleado empleado = empleadoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Empleado no encontrado para desactivar - id: {}", id);
+                    return new EntityNotFoundException("Empleado no encontrado con id: " + id);
+                });
         empleado.setActivo(false);
         empleadoRepository.save(empleado);
+        log.info("Empleado desactivado con id: {}", id);
     }
 }

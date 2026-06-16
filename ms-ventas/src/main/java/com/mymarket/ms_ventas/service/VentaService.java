@@ -6,6 +6,8 @@ import com.mymarket.ms_ventas.model.EstadoVenta;
 import com.mymarket.ms_ventas.model.VentaModel;
 import com.mymarket.ms_ventas.repository.VentaRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,6 +19,8 @@ import java.util.List;
 
 @Service
 public class VentaService {
+
+    private static final Logger log = LoggerFactory.getLogger(VentaService.class);
 
     private final VentaRepository ventaRepository;
     private final WebClient webClient;
@@ -39,8 +43,12 @@ public class VentaService {
     }
 
     public VentaModel buscarPorId(Long id) {
+        log.info("Buscando venta por id: {}", id);
         return ventaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Venta no encontrada con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Venta no encontrada con id: {}", id);
+                    return new EntityNotFoundException("Venta no encontrada con id: " + id);
+                });
     }
 
     public VentaModel registrarVenta(VentaModel venta) {
@@ -48,6 +56,7 @@ public class VentaService {
         InventarioDTO inventario = validarInventarioExiste(venta.getInventarioId());
 
         if (!inventario.getProductoId().equals(producto.getId())) {
+            log.warn("Inventario no corresponde al producto - inventarioId: {}, productoId: {}", venta.getInventarioId(), venta.getProductoId());
             throw new IllegalArgumentException("El inventario no corresponde al producto indicado.");
         }
 
@@ -65,7 +74,9 @@ public class VentaService {
             venta.setActivo(true);
         }
 
-        return ventaRepository.save(venta);
+        VentaModel guardada = ventaRepository.save(venta);
+        log.info("Venta registrada con id: {}, productoId: {}, cantidad: {}, total: {}", guardada.getId(), guardada.getProductoId(), guardada.getCantidadVendida(), guardada.getTotalVenta());
+        return guardada;
     }
 
     public VentaModel actualizar(Long id, VentaModel ventaActualizada) {
@@ -83,25 +94,32 @@ public class VentaService {
         ventaExistente.setEstado(ventaActualizada.getEstado());
         ventaExistente.setActivo(ventaActualizada.getActivo());
 
-        return ventaRepository.save(ventaExistente);
+        VentaModel actualizada = ventaRepository.save(ventaExistente);
+        log.info("Venta actualizada con id: {}", id);
+        return actualizada;
     }
 
     public void eliminarLogico(Long id) {
         VentaModel venta = buscarPorId(id);
         venta.setActivo(false);
         ventaRepository.save(venta);
+        log.info("Venta eliminada (logico) con id: {}", id);
     }
 
     public VentaModel marcarComoPagada(Long id) {
         VentaModel venta = buscarPorId(id);
         venta.setEstado(EstadoVenta.PAGADA);
-        return ventaRepository.save(venta);
+        VentaModel pagada = ventaRepository.save(venta);
+        log.info("Venta marcada como pagada con id: {}", id);
+        return pagada;
     }
 
     public VentaModel anularVenta(Long id) {
         VentaModel venta = buscarPorId(id);
         venta.setEstado(EstadoVenta.ANULADA);
-        return ventaRepository.save(venta);
+        VentaModel anulada = ventaRepository.save(venta);
+        log.info("Venta anulada con id: {}", id);
+        return anulada;
     }
 
     public List<VentaModel> buscarPorProductoId(Long productoId) {
@@ -126,6 +144,7 @@ public class VentaService {
 
     private ProductoDTO validarProductoExiste(Long productoId) {
         if (productoId == null) {
+            log.warn("ID de producto es null");
             throw new IllegalArgumentException("El ID del producto es obligatorio.");
         }
 
@@ -138,20 +157,24 @@ public class VentaService {
                     .block();
 
             if (producto == null || producto.getId() == null) {
+                log.warn("Producto no encontrado con id: {}", productoId);
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
             }
 
             return producto;
 
         } catch (WebClientResponseException.NotFound e) {
+            log.warn("Producto no encontrado via WebClient - id: {}", productoId);
             throw new IllegalArgumentException("El producto no existe con id: " + productoId);
         } catch (Exception e) {
+            log.error("Error al validar producto con id: {}", productoId, e);
             throw new IllegalArgumentException("No se pudo validar el producto con id: " + productoId);
         }
     }
 
     private InventarioDTO validarInventarioExiste(Long inventarioId) {
         if (inventarioId == null) {
+            log.warn("ID de inventario es null");
             throw new IllegalArgumentException("El ID del inventario es obligatorio.");
         }
 
@@ -164,20 +187,24 @@ public class VentaService {
                     .block();
 
             if (inventario == null || inventario.getId() == null) {
+                log.warn("Inventario no encontrado con id: {}", inventarioId);
                 throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
             }
 
             return inventario;
 
         } catch (WebClientResponseException.NotFound e) {
+            log.warn("Inventario no encontrado via WebClient - id: {}", inventarioId);
             throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
         } catch (Exception e) {
+            log.error("Error al validar inventario con id: {}", inventarioId, e);
             throw new IllegalArgumentException("No se pudo validar el inventario con id: " + inventarioId);
         }
     }
 
     private void descontarStock(Long inventarioId, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
+            log.warn("Cantidad vendida invalida: {}", cantidad);
             throw new IllegalArgumentException("La cantidad vendida debe ser mayor a 0.");
         }
 
@@ -189,7 +216,10 @@ public class VentaService {
                     .timeout(Duration.ofSeconds(5))
                     .block();
 
+            log.info("Stock descontado - inventarioId: {}, cantidad: {}", inventarioId, cantidad);
+
         } catch (Exception e) {
+            log.error("Error al descontar stock - inventarioId: {}, cantidad: {}", inventarioId, cantidad, e);
             throw new IllegalArgumentException("No se pudo descontar stock del inventario. Verifique stock disponible.");
         }
     }

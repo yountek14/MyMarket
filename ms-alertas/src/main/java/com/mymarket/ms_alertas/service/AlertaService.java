@@ -7,6 +7,8 @@ import com.mymarket.ms_alertas.model.EstadoAlerta;
 import com.mymarket.ms_alertas.model.TipoAlerta;
 import com.mymarket.ms_alertas.repository.AlertaRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,6 +21,8 @@ import java.util.List;
 
 @Service
 public class AlertaService {
+
+    private static final Logger log = LoggerFactory.getLogger(AlertaService.class);
 
     private final AlertaRepository alertaRepository;
     private final WebClient webClient;
@@ -41,8 +45,12 @@ public class AlertaService {
     }
 
     public AlertaModel buscarPorId(Long id) {
+        log.info("Buscando alerta por id: {}", id);
         return alertaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Alerta no encontrada con id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("Alerta no encontrada con id: {}", id);
+                    return new EntityNotFoundException("Alerta no encontrada con id: " + id);
+                });
     }
 
     public AlertaModel crearAlertaManual(AlertaModel alerta) {
@@ -58,7 +66,9 @@ public class AlertaService {
             alerta.setEstadoAlerta(EstadoAlerta.PENDIENTE);
         }
 
-        return alertaRepository.save(alerta);
+        AlertaModel guardada = alertaRepository.save(alerta);
+        log.info("Alerta manual creada con id: {}, tipo: {}", guardada.getId(), guardada.getTipoAlerta());
+        return guardada;
     }
 
     public AlertaModel resolverAlerta(Long id) {
@@ -67,13 +77,16 @@ public class AlertaService {
         alerta.setEstadoAlerta(EstadoAlerta.RESUELTA);
         alerta.setFechaResolucion(LocalDateTime.now());
 
-        return alertaRepository.save(alerta);
+        AlertaModel resuelta = alertaRepository.save(alerta);
+        log.info("Alerta resuelta con id: {}", id);
+        return resuelta;
     }
 
     public void eliminarLogico(Long id) {
         AlertaModel alerta = buscarPorId(id);
         alerta.setActivo(false);
         alertaRepository.save(alerta);
+        log.info("Alerta eliminada (logico) con id: {}", id);
     }
 
     public List<AlertaModel> buscarPorProductoId(Long productoId) {
@@ -107,6 +120,7 @@ public class AlertaService {
         } else if (inventario.getStockActual() <= inventario.getStockMinimo()) {
             tipoAlerta = TipoAlerta.STOCK_BAJO;
         } else {
+            log.warn("Intento de generar alerta de stock sin problemas - inventarioId: {}", inventarioId);
             throw new IllegalArgumentException("El inventario no presenta problemas de stock.");
         }
 
@@ -129,7 +143,9 @@ public class AlertaService {
                 .activo(true)
                 .build();
 
-        return alertaRepository.save(alerta);
+        AlertaModel guardada = alertaRepository.save(alerta);
+        log.info("Alerta de stock generada - id: {}, tipo: {}, inventarioId: {}", guardada.getId(), guardada.getTipoAlerta(), inventarioId);
+        return guardada;
     }
 
     public AlertaModel generarAlertaVencimiento(Long inventarioId) {
@@ -144,6 +160,7 @@ public class AlertaService {
         } else if (!inventario.getFechaVencimiento().isAfter(hoy.plusDays(7))) {
             tipoAlerta = TipoAlerta.PRODUCTO_POR_VENCER;
         } else {
+            log.warn("Intento de generar alerta de vencimiento sin problemas - inventarioId: {}", inventarioId);
             throw new IllegalArgumentException("El producto no está vencido ni próximo a vencer.");
         }
 
@@ -164,7 +181,9 @@ public class AlertaService {
                 .activo(true)
                 .build();
 
-        return alertaRepository.save(alerta);
+        AlertaModel guardada = alertaRepository.save(alerta);
+        log.info("Alerta de vencimiento generada - id: {}, tipo: {}, inventarioId: {}", guardada.getId(), guardada.getTipoAlerta(), inventarioId);
+        return guardada;
     }
 
     private InventarioDTO obtenerInventario(Long inventarioId) {
@@ -177,14 +196,17 @@ public class AlertaService {
                     .block();
 
             if (inventario == null || inventario.getId() == null) {
+                log.warn("Inventario no encontrado con id: {}", inventarioId);
                 throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
             }
 
             return inventario;
 
         } catch (WebClientResponseException.NotFound e) {
+            log.warn("Inventario no encontrado via WebClient - id: {}", inventarioId);
             throw new IllegalArgumentException("El inventario no existe con id: " + inventarioId);
         } catch (Exception e) {
+            log.error("Error al obtener inventario con id: {}", inventarioId, e);
             throw new IllegalArgumentException("No se pudo obtener el inventario con id: " + inventarioId);
         }
     }
@@ -199,14 +221,17 @@ public class AlertaService {
                     .block();
 
             if (producto == null || producto.getId() == null) {
+                log.warn("Producto no encontrado con id: {}", productoId);
                 throw new IllegalArgumentException("El producto no existe con id: " + productoId);
             }
 
             return producto;
 
         } catch (WebClientResponseException.NotFound e) {
+            log.warn("Producto no encontrado via WebClient - id: {}", productoId);
             throw new IllegalArgumentException("El producto no existe con id: " + productoId);
         } catch (Exception e) {
+            log.error("Error al obtener producto con id: {}", productoId, e);
             throw new IllegalArgumentException("No se pudo obtener el producto con id: " + productoId);
         }
     }
@@ -219,6 +244,7 @@ public class AlertaService {
         );
 
         if (existe) {
+            log.warn("Alerta duplicada - inventarioId: {}, tipo: {}", inventarioId, tipoAlerta);
             throw new IllegalArgumentException("Ya existe una alerta activa de este tipo para el inventario indicado.");
         }
     }
