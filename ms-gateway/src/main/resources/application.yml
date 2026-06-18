@@ -1,0 +1,58 @@
+server:
+  port: ${PORT:8090}
+
+spring:
+  application:
+    name: ms-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: ms-proveedores
+          uri: ${API_PROVEEDORES_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/proveedores/**
+
+        - id: ms-pedidos
+          uri: ${API_PEDIDOS_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/pedidos/**
+
+        - id: ms-empleados
+          uri: ${API_EMPLEADOS_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/empleados/**
+
+        - id: ms-inventario
+          uri: ${API_INVENTARIO_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/inventario/**
+
+        - id: ms-ventas
+          uri: ${API_VENTAS_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/ventas/**
+
+        - id: ms-alertas
+          uri: ${API_ALERTAS_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/alertas/**
+
+        - id: ms-precios
+          uri: ${API_PRECIOS_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/precios/**
+
+        - id: ms-productos
+          uri: ${API_PRODUCTOS_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/v1/productos/**
+
+        - id: ms-usuario
+          uri: ${API_USUARIO_URL:http://localhost:8088}
+          predicates:
+            - Path=/api/usuarios/**
+
+        - id: ms-reportes
+          uri: ${API_REPORTES_URL:http://localhost:8089}
+          predicates:
+            - Path=/api/reportes/**
