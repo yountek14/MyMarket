@@ -1,6 +1,7 @@
 @echo off
 echo Iniciando todos los microservicios de MyMarket...
 
+start "MS Gateway" cmd /k "cd ms-gateway && mvn spring-boot:run"
 start "MS Alertas" cmd /k "cd ms-alertas && mvn spring-boot:run"
 start "MS Empleados" cmd /k "cd ms-empleados && mvn spring-boot:run"
 start "MS Inventario" cmd /k "cd ms-inventario && mvn spring-boot:run"
