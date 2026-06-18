@@ -153,7 +153,7 @@ public class VentaService {
                     .uri(productosUrl + productoId)
                     .retrieve()
                     .bodyToMono(ProductoDTO.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             if (producto == null || producto.getId() == null) {
@@ -183,7 +183,7 @@ public class VentaService {
                     .uri(inventarioUrl + inventarioId)
                     .retrieve()
                     .bodyToMono(InventarioDTO.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             if (inventario == null || inventario.getId() == null) {
@@ -213,7 +213,7 @@ public class VentaService {
                     .uri(inventarioUrl + inventarioId + "/salida?cantidad=" + cantidad)
                     .retrieve()
                     .bodyToMono(Void.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             log.info("Stock descontado - inventarioId: {}, cantidad: {}", inventarioId, cantidad);

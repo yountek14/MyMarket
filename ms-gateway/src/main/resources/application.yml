@@ -6,6 +6,19 @@ spring:
     name: ms-gateway
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
       routes:
         - id: ms-proveedores
           uri: ${API_PROVEEDORES_URL:http://localhost:8080}

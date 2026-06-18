@@ -192,7 +192,7 @@ public class AlertaService {
                     .uri(inventarioUrl + inventarioId)
                     .retrieve()
                     .bodyToMono(InventarioDTO.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             if (inventario == null || inventario.getId() == null) {
@@ -217,7 +217,7 @@ public class AlertaService {
                     .uri(productosUrl + productoId)
                     .retrieve()
                     .bodyToMono(ProductoDTO.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             if (producto == null || producto.getId() == null) {

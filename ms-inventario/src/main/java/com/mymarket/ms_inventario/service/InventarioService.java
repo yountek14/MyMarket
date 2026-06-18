@@ -207,7 +207,7 @@ public class InventarioService {
                     .uri(productosUrl + productoId)
                     .retrieve()
                     .bodyToMono(ProductoDTO.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(30))
                     .block();
 
             if (producto == null || producto.getId() == null) {
