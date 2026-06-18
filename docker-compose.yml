@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  ms-gateway:
+    build: ./ms-gateway
+    container_name: ms-gateway
+    ports:
+      - "8090:8090"
+    environment:
+      - PORT=8090
+      - API_PROVEEDORES_URL=http://ms-proveedores:8080
+      - API_PEDIDOS_URL=http://ms-pedidos:8081
+      - API_EMPLEADOS_URL=http://ms-empleados:8082
+      - API_INVENTARIO_URL=http://ms-inventario:8083
+      - API_VENTAS_URL=http://ms-ventas:8084
+      - API_ALERTAS_URL=http://ms-alertas:8085
+      - API_PRECIOS_URL=http://ms-precios:8086
+      - API_PRODUCTOS_URL=http://ms-productos:8087
+      - API_USUARIO_URL=http://ms-usuario:8088
+      - API_REPORTES_URL=http://ms-reportes:8089
+    networks:
+      - mymarket-network
+    depends_on:
+      - ms-proveedores
+      - ms-pedidos
+      - ms-empleados
+      - ms-inventario
+      - ms-ventas
+      - ms-alertas
+      - ms-precios
+      - ms-productos
+      - ms-usuario
+      - ms-reportes
+
+  ms-proveedores:
+    build: ./ms-proveedores
+    container_name: ms-proveedores
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    networks:
+      - mymarket-network
+
+  ms-pedidos:
+    build: ./ms-pedidos
+    container_name: ms-pedidos
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+    networks:
+      - mymarket-network
+
+  ms-empleados:
+    build: ./ms-empleados
+    container_name: ms-empleados
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+    networks:
+      - mymarket-network
+
+  ms-inventario:
+    build: ./ms-inventario
+    container_name: ms-inventario
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - API_PRODUCTOS_URL=http://ms-productos:8087
+    networks:
+      - mymarket-network
+    depends_on:
+      - ms-productos
+
+  ms-ventas:
+    build: ./ms-ventas
+    container_name: ms-ventas
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+      - API_PRODUCTOS_URL=http://ms-productos:8087
+      - API_INVENTARIO_URL=http://ms-inventario:8083
+    networks:
+      - mymarket-network
+    depends_on:
+      - ms-productos
+      - ms-inventario
+
+  ms-alertas:
+    build: ./ms-alertas
+    container_name: ms-alertas
+    ports:
+      - "8085:8085"
+    environment:
+      - PORT=8085
+      - API_INVENTARIO_URL=http://ms-inventario:8083
+      - API_PRODUCTOS_URL=http://ms-productos:8087
+    networks:
+      - mymarket-network
+    depends_on:
+      - ms-inventario
+      - ms-productos
+
+  ms-precios:
+    build: ./ms-precios
+    container_name: ms-precios
+    ports:
+      - "8086:8086"
+    environment:
+      - PORT=8086
+    networks:
+      - mymarket-network
+
+  ms-productos:
+    build: ./ms-productos
+    container_name: ms-productos
+    ports:
+      - "8087:8087"
+    environment:
+      - PORT=8087
+    networks:
+      - mymarket-network
+
+  ms-usuario:
+    build: ./ms-usuario
+    container_name: ms-usuario
+    ports:
+      - "8088:8088"
+    environment:
+      - PORT=8088
+    networks:
+      - mymarket-network
+
+  ms-reportes:
+    build: ./ms-reportes
+    container_name: ms-reportes
+    ports:
+      - "8089:8089"
+    environment:
+      - PORT=8089
+    networks:
+      - mymarket-network
+
+networks:
+  mymarket-network:
+    driver: bridge
