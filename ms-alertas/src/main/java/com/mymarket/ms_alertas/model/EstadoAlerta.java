@@ -1,5 +1,8 @@
 package com.mymarket.ms_alertas.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Estado de la alerta: pendiente, activa o resuelta")
 public enum EstadoAlerta {
 
     // La alerta fue generada y aún no ha sido revisada o atendida.
