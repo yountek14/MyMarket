@@ -16,6 +16,10 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Servicio de gestion de inventario con control de stock, merma, vencimientos
+ * y comunicacion via WebClient con ms-productos para validar la existencia del producto.
+ */
 @Service
 public class InventarioService {
 
@@ -196,6 +200,10 @@ public class InventarioService {
         return inventarioRepository.findByStockActualLessThanEqual(stockLimite);
     }
 
+    /**
+     * Consulta a ms-productos via WebClient para verificar que el ID corresponde
+     * a un producto existente. Lanza {@link IllegalArgumentException} si falla.
+     */
     private ProductoDTO validarProductoExiste(Long productoId) {
         if (productoId == null) {
             log.warn("ID de producto es null");
@@ -226,6 +234,11 @@ public class InventarioService {
         }
     }
 
+    /**
+     * Determina y asigna el estado del inventario segun reglas de negocio:
+     * VENCIDO si la fecha paso, AGOTADO si stock=0, BAJO_STOCK si stock <= minimo,
+     * DISPONIBLE en cualquier otro caso.
+     */
     private void actualizarEstadoAutomatico(InventarioModel inventario) {
         if (inventario.getFechaVencimiento().isBefore(LocalDate.now())) {
             inventario.setEstado(EstadoInventario.VENCIDO);

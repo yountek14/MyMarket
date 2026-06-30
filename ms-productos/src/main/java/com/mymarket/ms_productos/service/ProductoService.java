@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio de gestion de productos del catalogo.
+ * Valida unicidad de nombres y aplica eliminacion logica.
+ */
 @Service
 public class ProductoService {
 
@@ -21,12 +25,10 @@ public class ProductoService {
         this.productoRepository = productoRepository;
     }
 
-    //Listar todos
     public List<ProductoModel> listarTodos() {
         return productoRepository.findAll();
     }
 
-    //Buscar por ID
     public ProductoModel buscarPorId(Long id) {
         log.info("Buscando producto por id: {}", id);
         return productoRepository.findById(id)
@@ -36,7 +38,10 @@ public class ProductoService {
                 });
     }
 
-    //Guardar
+    /**
+     * Crea un producto validando que no exista otro con el mismo nombre (case-insensitive).
+     * Si {@code activo} viene nulo, se asigna {@code true} por defecto.
+     */
     public ProductoModel guardar(ProductoModel producto) {
 
         if (productoRepository.existsByNombreProductoIgnoreCase(producto.getNombreProducto())) {
@@ -53,7 +58,10 @@ public class ProductoService {
         return guardado;
     }
 
-    //Actualizar
+    /**
+     * Actualiza un producto existente. Si se cambia el nombre, valida que
+     * no entre en conflicto con otro producto ya registrado.
+     */
     public ProductoModel actualizar(Long id, ProductoModel productoActualizado) {
 
         ProductoModel productoExistente = buscarPorId(id);
@@ -79,7 +87,9 @@ public class ProductoService {
         return actualizado;
     }
 
-    //Eliminación lógica
+    /**
+     * Eliminacion logica: marca el producto como inactivo sin borrar el registro.
+     */
     public void eliminarLogico(Long id) {
         ProductoModel producto = buscarPorId(id);
         producto.setActivo(false);
@@ -87,7 +97,6 @@ public class ProductoService {
         log.info("Producto eliminado (logico) con id: {}", id);
     }
 
-    //Filtros
     public List<ProductoModel> buscarPorCategoria(String categoria) {
         return productoRepository.findByCategoria(categoria);
     }

@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio de gestion de empleados. Trabaja con DTOs (Request/Response) para
+ * separar la entrada de la salida. Valida unicidad de RUT y usuarioId por empleado.
+ */
 @Service
 public class EmpleadoService {
 
@@ -24,6 +28,7 @@ public class EmpleadoService {
         this.empleadoRepository = empleadoRepository;
     }
 
+    /** Convierte DTO de entrada a entidad JPA. */
     private Empleado toEntity(EmpleadoRequestDTO dto){
         Empleado e = new Empleado();
         e.setNombre(dto.getNombre());
@@ -36,6 +41,7 @@ public class EmpleadoService {
         e.setUsuarioId(dto.getUsuarioId());
         return e;
     }
+    /** Convierte entidad JPA a DTO de respuesta (oculta datos sensibles). */
     private EmpleadoResponseDTO toDTO(Empleado e){
         EmpleadoResponseDTO dto = new EmpleadoResponseDTO();
         dto.setId(e.getId());

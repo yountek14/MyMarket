@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Servicio de generacion de reportes. Asigna timestamp automatico al crear un reporte.
+ */
 @Service
 public class ReporteService {
 

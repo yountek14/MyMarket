@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio de gestion de precios con soporte de descuentos (porcentaje/fijo)
+ * y precios por temporada. El precio final se calcula al devolver el DTO.
+ */
 @Service
 public class PrecioService {
 
@@ -23,6 +27,11 @@ public class PrecioService {
         this.precioRepository = precioRepository;
     }
 
+    /**
+     * Calcula el precio final aplicando el descuento configurado.
+     * PORCENTAJE: descuenta un % del precio base.
+     * FIJO: descuenta un monto fijo (minimo $0).
+     */
     private Double calcularPrecioFinal(Precio p) {
         if (p.getTipoDescuento() == null || p.getValorDescuento() == null) {
             return p.getPrecioBase();
