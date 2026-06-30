@@ -17,6 +17,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Servicio de gestion de ventas. Valida producto e inventario via WebClient,
+ * descuenta stock del inventario, calcula el total y registra la venta.
+ * Se comunica con ms-productos y ms-inventario.
+ */
 @Service
 public class VentaService {
 
@@ -51,6 +56,11 @@ public class VentaService {
                 });
     }
 
+    /**
+     * Registra una venta: valida producto e inventario, verifica que el inventario
+     * corresponda al producto, descuenta stock y calcula el total (cantidad * precioUnitario).
+     * El estado inicial de la venta es REGISTRADA.
+     */
     public VentaModel registrarVenta(VentaModel venta) {
         ProductoDTO producto = validarProductoExiste(venta.getProductoId());
         InventarioDTO inventario = validarInventarioExiste(venta.getInventarioId());
@@ -142,6 +152,7 @@ public class VentaService {
         return ventaRepository.findByFechaVentaBetween(inicio, fin);
     }
 
+    /** Consulta a ms-productos para verificar que el producto existe. */
     private ProductoDTO validarProductoExiste(Long productoId) {
         if (productoId == null) {
             log.warn("ID de producto es null");
@@ -172,6 +183,7 @@ public class VentaService {
         }
     }
 
+    /** Consulta a ms-inventario para verificar que el inventario existe. */
     private InventarioDTO validarInventarioExiste(Long inventarioId) {
         if (inventarioId == null) {
             log.warn("ID de inventario es null");
@@ -202,6 +214,7 @@ public class VentaService {
         }
     }
 
+    /** Llama al endpoint PUT /salida del ms-inventario para descontar stock. */
     private void descontarStock(Long inventarioId, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
             log.warn("Cantidad vendida invalida: {}", cantidad);

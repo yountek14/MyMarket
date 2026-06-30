@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Servicio de gestion de usuarios con eliminacion logica (desactivacion).
+ */
 @Service
 public class UsuarioService {
 

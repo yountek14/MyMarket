@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Servicio de gestion de pedidos. Asigna fecha actual y estado PENDIENTE
+ * por defecto si no se especifican al crear.
+ */
 @Service
 public class PedidoServiceImpl implements IPedidoService {
 

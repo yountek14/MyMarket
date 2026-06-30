@@ -19,6 +19,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Servicio de gestion de alertas. Permite crear alertas manuales y generar
+ * automaticamente alertas de stock (bajo/agotado) y vencimiento (vencido/por vencer)
+ * consultando ms-inventario y ms-productos via WebClient.
+ */
 @Service
 public class AlertaService {
 
@@ -109,6 +114,11 @@ public class AlertaService {
         return alertaRepository.findByActivo(activo);
     }
 
+    /**
+     * Genera alerta de stock automaticamente. Determina si es STOCK_AGOTADO o STOCK_BAJO
+     * segun el nivel de stock actual vs el minimo del inventario.
+     * Valida que no exista una alerta activa duplicada para el mismo inventario y tipo.
+     */
     public AlertaModel generarAlertaStock(Long inventarioId) {
         InventarioDTO inventario = obtenerInventario(inventarioId);
         ProductoDTO producto = obtenerProducto(inventario.getProductoId());
@@ -148,6 +158,10 @@ public class AlertaService {
         return guardada;
     }
 
+    /**
+     * Genera alerta de vencimiento automaticamente. Determina si es PRODUCTO_VENCIDO
+     * (fecha anterior a hoy) o PRODUCTO_POR_VENCER (proximos 7 dias).
+     */
     public AlertaModel generarAlertaVencimiento(Long inventarioId) {
         InventarioDTO inventario = obtenerInventario(inventarioId);
         ProductoDTO producto = obtenerProducto(inventario.getProductoId());
@@ -236,6 +250,7 @@ public class AlertaService {
         }
     }
 
+    /** Evita que se genere mas de una alerta activa del mismo tipo para el mismo inventario. */
     private void validarAlertaDuplicada(Long inventarioId, TipoAlerta tipoAlerta) {
         boolean existe = alertaRepository.existsByInventarioIdAndTipoAlertaAndEstadoAlerta(
                 inventarioId,

@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manejador centralizado de excepciones.
+ * Captura EntityNotFoundException (404), IllegalArgumentException (400),
+ * MethodArgumentNotValidException (400 con campos) y Exception generica (500).
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
